@@ -3,3 +3,4 @@ data/*
 fonts/*
 *.png
 .python-version
+*/__pycache__
