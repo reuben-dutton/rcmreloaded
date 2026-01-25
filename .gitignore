@@ -1,0 +1,5 @@
+*.env
+data/*
+fonts/*
+*.png
+.python-version
