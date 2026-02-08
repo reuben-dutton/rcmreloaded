@@ -43,7 +43,7 @@ canvas_layer = CanvasLayer(rgb=colour.rgb)
 icon_layer = SpaceIconLayer(position=(1200 - 84, 1200 - 160))
 
 
-image = compile_layers(canvas_layer, name_layer, hexcode_layer, icon_layer)
+image = compile_layers(canvas_layer, name_layer, hexcode_layer)
 buffer = io.BytesIO()
 image.save(buffer, format="PNG")
 
