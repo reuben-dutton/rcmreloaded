@@ -6,12 +6,14 @@ if root not in sys.path:
     sys.path.append(root)
 
 import io
+import math
 import os
 
 import atproto
 import dotenv
 import numpy as np
 
+from generators import RGBGenerator, HSVGenerator, CIELChGenerator
 from layers.constants import (
     DEFAULT_SIZE,
     DEFAULT_NONE_COLOUR,
@@ -21,6 +23,7 @@ from layers.text import (
     NameTextLayer,
     HexcodeTextLayer,
 )
+from layers.space import SpaceIconLayer, SwatchLayer
 from layers.utils import compile_layers
 from models.colour import Colour
 
@@ -30,15 +33,17 @@ dotenv.load_dotenv()
 USERNAME = os.getenv('ATPROTO_CLIENT_USERNAME')
 PASSWORD = os.getenv('ATPROTO_CLIENT_PASSWORD')
 
-rgb = tuple(np.random.randint(0, 256, size=3))
-colour = Colour.from_rgb(rgb[:3])
 
-name_layer = NameTextLayer(text=colour.name.upper())
-hexcode_layer = HexcodeTextLayer(text=colour.hexcode)
+colour = CIELChGenerator().generate(1)
+
+
+name_layer = NameTextLayer(text=colour.name.upper(), position=(1200 - 120, 1200 - 108*5/6 - 40), anchor='rb')
+hexcode_layer = HexcodeTextLayer(text=colour.hexcode, position=(1200 - 120, 1200 - 40), anchor='rb')
 canvas_layer = CanvasLayer(rgb=colour.rgb)
+icon_layer = SpaceIconLayer(position=(1200 - 84, 1200 - 160))
 
 
-image = compile_layers(canvas_layer, name_layer, hexcode_layer)
+image = compile_layers(canvas_layer, name_layer, hexcode_layer, icon_layer)
 buffer = io.BytesIO()
 image.save(buffer, format="PNG")
 

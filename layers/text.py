@@ -11,6 +11,7 @@ from layers.base import BaseLayer
 from layers.constants import (
     DEFAULT_WHITE_COLOUR,
     DEFAULT_BLACK_COLOUR,
+    DEFAULT_GREY_COLOUR,
     DEFAULT_NONE_COLOUR,
     DEFAULT_SIZE,
 )
@@ -27,14 +28,14 @@ DEFAULT_SHADOW_BLUR_RADIUS = 6
 
 
 PRIMARY_FONT_PATH = 'fonts/Bayemalt-Regular.otf'
-PRIMARY_FONT_SIZE = 144
+PRIMARY_FONT_SIZE = 108
 PRIMARY_FONT = ImageFont.truetype(
     font=PRIMARY_FONT_PATH,
     size=PRIMARY_FONT_SIZE,
 )
 
 SECONDARY_FONT_PATH = 'fonts/SairaCondensed-Bold.ttf'
-SECONDARY_FONT_SIZE = 72
+SECONDARY_FONT_SIZE = 54
 SECONDARY_FONT = ImageFont.truetype(
     font=SECONDARY_FONT_PATH,
     size=SECONDARY_FONT_SIZE,
@@ -59,7 +60,7 @@ def create_text_shadow_sublayer(
     for i in range(iterations):
         shadow_iteration = Image.new("RGBA", size=size, color=DEFAULT_NONE_COLOUR)
         shadow_canvas = ImageDraw.Draw(shadow_iteration)
-        shadow_canvas.text(position, text, font=font, fill=DEFAULT_BLACK_COLOUR, anchor=anchor)
+        shadow_canvas.text(position, text, font=font, fill=color, anchor=anchor)
         shadow_iteration = shadow_iteration.filter(ImageFilter.GaussianBlur(radius=blur_radius))
         shadow_layer = Image.alpha_composite(shadow_layer, shadow_iteration)
     return shadow_layer
@@ -67,7 +68,7 @@ def create_text_shadow_sublayer(
 
 class TextLayer(BaseLayer):
 
-    def __init__(self, text: str):
+    def __init__(self, text: str, position: tuple[int, int], anchor: str):
         # position, font and anchor are hard-coded for each text layer
         if not self.font:
             raise Exception('Font should be set in __init__')
@@ -79,6 +80,7 @@ class TextLayer(BaseLayer):
         if not text:
             raise Exception('Text must be provided')
 
+        # self.text = "\n".join(textwrap.wrap(text, width=50, break_long_words=False, break_on_hyphens=False))
         self.text = text
 
     def _create_layer(self):
@@ -109,17 +111,17 @@ class TextLayer(BaseLayer):
 
 class NameTextLayer(TextLayer):
 
-    def __init__(self, text: str):
+    def __init__(self, text: str, position: tuple[int, int], anchor: str):
         self.font = SECONDARY_FONT
-        self.position = (600, 600 - 20) # slightly above center image
-        self.anchor = "mb" # middle bottom
-        super().__init__(text)
+        self.position = position # slightly above center image
+        self.anchor = anchor # middle bottom
+        super().__init__(text, position, anchor)
 
 
 class HexcodeTextLayer(TextLayer):
 
-    def __init__(self, text: str):
+    def __init__(self, text: str, position: tuple[int, int], anchor: str):
         self.font = PRIMARY_FONT
-        self.position = (600, 600) # center image
-        self.anchor = "mt"  # middle top
-        super().__init__(text)
+        self.position = position # center image
+        self.anchor = anchor  # middle top
+        super().__init__(text, position, anchor)
