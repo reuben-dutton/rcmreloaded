@@ -1,4 +1,5 @@
 from .base import (
+    Generator,
     RGBGenerator,
     HSVGenerator
 )

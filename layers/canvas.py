@@ -18,12 +18,12 @@ class CanvasLayer(BaseLayer):
     def __init__(self, rgb: tuple[int, int, int]):
         self.rgb = rgb 
 
-    def _create_layer(self):
+    def _create_layer(self, size: tuple[int, int] = DEFAULT_SIZE):
         base = np.float64(
             np.asarray(
                 Image.new(
                     "RGBA",
-                    size=DEFAULT_SIZE,
+                    size=size,
                     color=self.rgb + (255,)
                 )
             )

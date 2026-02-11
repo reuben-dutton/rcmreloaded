@@ -15,11 +15,10 @@ class Generator:
     def single(self) -> Colour:
         raise NotImplementedError
 
-    def generate(self, n: int = 1) -> Colour | list[Colour]:
+    def generate(self, n: int) -> Colour | list[Colour]:
         if n == 1:
-            return self.single()
+            return [self.single()]
         return [self.single() for i in range(n)]
-
 
 
 class RGBGenerator(Generator):
@@ -38,7 +37,7 @@ class HSVGenerator(Generator):
         return Colour.from_rgb((int(r*255), int(g*255), int(b*255)))
 
 
-
+    
 # class PerceptuallyUniformGenerator(Generator):
 
 #     def single(self) -> Colour:

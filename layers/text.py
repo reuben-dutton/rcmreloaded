@@ -42,6 +42,13 @@ SECONDARY_FONT = ImageFont.truetype(
 )
 
 
+BASE_BOTTOM_TEXT_OFFSET = 50
+BASE_RIGHT_TEXT_OFFSET = 60
+TEXT_HEIGHT_FACTOR = 5 / 6
+ADD_BOTTOM_TEXT_OFFSET = int(PRIMARY_FONT_SIZE * TEXT_HEIGHT_FACTOR)
+
+
+
 '''
     Utility function to generate text shadow.
 '''
@@ -68,14 +75,12 @@ def create_text_shadow_sublayer(
 
 class TextLayer(BaseLayer):
 
-    def __init__(self, text: str, position: tuple[int, int], anchor: str):
+    def __init__(self, text: str):
         # position, font and anchor are hard-coded for each text layer
         if not self.font:
             raise Exception('Font should be set in __init__')
-        if not self.position:
+        if not self.position_offset:
             raise Exception('Position should be set in __init__')
-        if not self.anchor:
-            raise Exception('Anchor should be set in __init__')
 
         if not text:
             raise Exception('Text must be provided')
@@ -83,24 +88,30 @@ class TextLayer(BaseLayer):
         # self.text = "\n".join(textwrap.wrap(text, width=50, break_long_words=False, break_on_hyphens=False))
         self.text = text
 
-    def _create_layer(self):
+    def _create_layer(self, size: tuple[int, int] = DEFAULT_SIZE):
+        position = (
+            size[0] + self.position_offset[0],
+            size[1] + self.position_offset[1]
+        )
+
         # create a layer for text shadow
         shadow_layer = create_text_shadow_sublayer(
-            self.position,
+            position,
             self.text,
             self.font,
-            self.anchor
+            anchor='rb',
+            size=size
         )
 
         # create a layer for the raw text
-        text_layer = Image.new("RGBA", size=DEFAULT_SIZE, color=DEFAULT_NONE_COLOUR)
+        text_layer = Image.new("RGBA", size=size, color=DEFAULT_NONE_COLOUR)
         text_layer_canvas = ImageDraw.Draw(text_layer)
         text_layer_canvas.text(
-            self.position,
+            position,
             self.text,
             font=self.font,
             fill=DEFAULT_WHITE_COLOUR,
-            anchor=self.anchor
+            anchor='rb'
         )
 
         # composit the layers
@@ -111,17 +122,21 @@ class TextLayer(BaseLayer):
 
 class NameTextLayer(TextLayer):
 
-    def __init__(self, text: str, position: tuple[int, int], anchor: str):
+    def __init__(self, text: str):
         self.font = SECONDARY_FONT
-        self.position = position # slightly above center image
-        self.anchor = anchor # middle bottom
-        super().__init__(text, position, anchor)
+        self.position_offset = (
+            - BASE_RIGHT_TEXT_OFFSET,
+            - BASE_BOTTOM_TEXT_OFFSET - ADD_BOTTOM_TEXT_OFFSET
+        )
+        super().__init__(text)
 
 
 class HexcodeTextLayer(TextLayer):
 
-    def __init__(self, text: str, position: tuple[int, int], anchor: str):
+    def __init__(self, text: str):
         self.font = PRIMARY_FONT
-        self.position = position # center image
-        self.anchor = anchor  # middle top
-        super().__init__(text, position, anchor)
+        self.position_offset = (
+            - BASE_RIGHT_TEXT_OFFSET,
+            - BASE_BOTTOM_TEXT_OFFSET
+        )
+        super().__init__(text)

@@ -9,8 +9,10 @@ from layers.constants import (
 )
 
 
-def compile_layers(*args: list[BaseLayer]):
-    image = Image.new("RGBA", size=DEFAULT_SIZE, color=DEFAULT_NONE_COLOUR)
+def compile_layers(size, *args: list[BaseLayer]):
+    if size is None:
+        size = DEFAULT_SIZE
+    image = Image.new("RGBA", size=size, color=DEFAULT_NONE_COLOUR)
     for arg in args:
-        image = Image.alpha_composite(image, arg._create_layer())
+        image = Image.alpha_composite(image, arg._create_layer(size=size))
     return image

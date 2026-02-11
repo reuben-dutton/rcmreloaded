@@ -17,6 +17,7 @@ scipy = "^1.17.0"
 ipykernel = "^7.1.0"
 colorspacious = "^1.1.2"
 matplotlib = "^3.10.8"
+coloraide = "^8.1"
 
 
 [build-system]

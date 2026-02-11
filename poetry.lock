@@ -198,6 +198,17 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "coloraide"
+version = "8.1"
+description = "A color library for Python."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "coloraide-8.1-py3-none-any.whl", hash = "sha256:70eb1d32651c24502e731592219d4b788accd31d2b4af87a793049357bb8c083"},
+    {file = "coloraide-8.1.tar.gz", hash = "sha256:b87a77fbf9a2cb6edae5eb4bc4ab542c78f166b13f52ee0f52a3fbe25abc0931"},
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -2105,4 +2116,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12,<3.15"
-content-hash = "7ad9ad5791cbc54c0ad09ff23a50054ad12aa5eb109956718c519e2d36cc9431"
+content-hash = "17a03f0f91b6097381f3c2c5bddb73343866ce6e306a94388488afb31f94738c"
