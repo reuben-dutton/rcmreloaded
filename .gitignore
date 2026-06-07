@@ -2,5 +2,6 @@
 data/*
 fonts/*
 *.png
+*.webp
 .python-version
 */__pycache__

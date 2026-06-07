@@ -25,20 +25,20 @@ class Frame:
             name_layer = NameTextLayer(text=colour.name.upper())
             hexcode_layer = HexcodeTextLayer(text=colour.hexcode)
             canvas_layer = CanvasLayer(rgb=colour.rgb)
-            slide = compile_layers(self.slide_size, canvas_layer, name_layer, hexcode_layer)
+            slide = compile_layers(self.slide_size, *[canvas_layer, name_layer, hexcode_layer])
 
             slides.append(slide)
 
         return slides
 
-    def construct_frame(self, colours: Colour | list[Colour]):
+    def construct_frame(self, colours: list[Colour]):
         raise NotImplementedError
 
 
 
 class SingleFrame(Frame):
 
-    def construct_frame(self, colours: Colour | list[Colour]):
+    def construct_frame(self, colours: list[Colour]):
         if not isinstance(colours, Colour) and len(colours) != 1:
             raise Exception('SingleFrame cannot have more than one colour')
 

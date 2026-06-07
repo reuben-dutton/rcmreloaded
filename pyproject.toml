@@ -18,6 +18,11 @@ ipykernel = "^7.1.0"
 colorspacious = "^1.1.2"
 matplotlib = "^3.10.8"
 coloraide = "^8.1"
+scikit-image = "^0.26.0"
+plotly = "^6.8.0"
+nbformat = "^5.10.4"
+streamlit = "^1.58.0"
+dash = "^4.2.0"
 
 
 [build-system]

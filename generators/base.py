@@ -15,7 +15,7 @@ class Generator:
     def single(self) -> Colour:
         raise NotImplementedError
 
-    def generate(self, n: int) -> Colour | list[Colour]:
+    def generate(self, n: int) -> list[Colour]:
         if n == 1:
             return [self.single()]
         return [self.single() for i in range(n)]

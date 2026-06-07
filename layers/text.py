@@ -1,4 +1,5 @@
 import textwrap
+from tkinter import font
 
 from PIL import (
     Image,
@@ -55,10 +56,10 @@ ADD_BOTTOM_TEXT_OFFSET = int(PRIMARY_FONT_SIZE * TEXT_HEIGHT_FACTOR)
 def create_text_shadow_sublayer(
     position: tuple[int, int],
     text: str,
-    font: ImageFont.ImageFont,
+    font: ImageFont.ImageFont | ImageFont.FreeTypeFont,
     anchor: str,
     size: tuple[int, int] = DEFAULT_SIZE,
-    color: tuple[int, int, int] = DEFAULT_BLACK_COLOUR,
+    color: tuple[int, int, int, int] = DEFAULT_BLACK_COLOUR,
     iterations: int = DEFAULT_BLUR_ITERATIONS,  # how thick the shadow should be
     blur_radius: int = DEFAULT_SHADOW_BLUR_RADIUS,  # how far the shadow should extend
 ):
@@ -74,6 +75,9 @@ def create_text_shadow_sublayer(
 
 
 class TextLayer(BaseLayer):
+
+    font: ImageFont.FreeTypeFont | ImageFont.ImageFont
+    position_offset: tuple[int, int]
 
     def __init__(self, text: str):
         # position, font and anchor are hard-coded for each text layer

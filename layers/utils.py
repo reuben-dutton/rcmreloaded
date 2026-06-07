@@ -9,7 +9,7 @@ from layers.constants import (
 )
 
 
-def compile_layers(size, *args: list[BaseLayer]):
+def compile_layers(size, *args):
     if size is None:
         size = DEFAULT_SIZE
     image = Image.new("RGBA", size=size, color=DEFAULT_NONE_COLOUR)
