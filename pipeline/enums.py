@@ -82,9 +82,17 @@ class Palette(enum.Enum):
         ]
 
 
+class _Double: ...
+class _Triple: ...
+class _Quad: ...
+
+
 class Frame(enum.Enum):
     RANDOM = _Random
     DEFAULT = SingleFrame(1, (1200, 1200))
+    DOUBLE = _Double
+    TRIPLE = _Triple
+    QUAD = _Quad
     SINGLE = SingleFrame(1, (1200, 1200))
     DOUBLE_HORIZONTAL = HorizontalFrame(2, (600, 1200))
     DOUBLE_VERTICAL = VerticalFrame( 2, (1200, 600))
@@ -96,7 +104,25 @@ class Frame(enum.Enum):
 
     @staticmethod
     def choices():
-        return [f.value for f in Frame if f not in (Frame.RANDOM, Frame.DEFAULT,)]
+        return [f.value for f in Frame if f not in (
+            Frame.RANDOM,
+            Frame.DEFAULT,
+            Frame.DOUBLE,
+            Frame.TRIPLE,
+            Frame.QUAD,
+        )]
+    
+    @staticmethod
+    def doubles():
+        return [Frame.DOUBLE_HORIZONTAL.value, Frame.DOUBLE_VERTICAL]
+    
+    @staticmethod
+    def triples():
+        return [Frame.TRIPLE_HORIZONTAL.value, Frame.TRIPLE_VERTICAL.value]
+    
+    @staticmethod
+    def quads():
+        return [Frame.QUAD_HORIZONTAL.value, Frame.QUAD_VERTICAL.value, Frame.QUAD_GRID.value]
 
 
 class Sample(enum.Enum):

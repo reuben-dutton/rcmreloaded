@@ -70,8 +70,15 @@ class FrameOp:
     frame: Frame
 
     def resolve(self):
-        if self.frame == Frame.RANDOM:
-            return Frame.choices()
+        match self.frame:
+            case Frame.RANDOM:
+                return Frame.choices()
+            case Frame.DOUBLE:
+                return Frame.doubles()
+            case Frame.TRIPLE:
+                return Frame.triples()
+            case Frame.QUAD:
+                return Frame.quads()
         return [self.frame.value]
 
 
