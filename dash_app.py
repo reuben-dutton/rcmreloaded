@@ -11,7 +11,7 @@ from PIL import Image
 from skimage import color
 from sklearn.neighbors import KernelDensity
 
-from models.themes import KDETheme
+from pipeline.themes import KDETheme
 
 app = Dash(__name__)
 

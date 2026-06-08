@@ -1,12 +1,14 @@
 import dataclasses
 import pickle
 import random
+import typing
 
 import numpy as np
 import skimage
 import sklearn.neighbors
 
 from models.colour import Colour
+
 
 '''
 Themes restrict the generation of colours to specific areas in color space,
@@ -18,9 +20,11 @@ and then generating colours until the valid space is hit (fairly naive).
 
 
 @dataclasses.dataclass
-class ThemeBase:
-    name: str
+class _ThemeBase:
 
+    INVARIANT: typing.ClassVar[bool] = False
+
+    name: str
 
     def accepted(self, colour: Colour) -> bool:
         raise NotImplementedError
@@ -30,7 +34,7 @@ class ThemeBase:
         raise NotImplementedError
 
     @classmethod
-    def deserialize(cls, data: bytes) -> "ThemeBase":
+    def deserialize(cls, data: bytes) -> "_ThemeBase":
         raise NotImplementedError
     
 
@@ -41,7 +45,12 @@ We include a trivial 'everything' theme, which acts as the default.
 '''
 
 @dataclasses.dataclass
-class DefaultTheme(ThemeBase):
+class DefaultTheme(_ThemeBase):
+
+    INVARIANT: typing.ClassVar[bool] = True
+
+    def __init__(self):
+        self.name = "default"
 
     def accepted(self, colour: Colour) -> bool:
         return True
@@ -62,8 +71,8 @@ These contain a kernel density model, which is then clipped and normalized.
 Probability of acceptance is equal to the normalized log density for that colour.
 '''
 @dataclasses.dataclass
-class KDETheme(ThemeBase):
-    name: str
+class KDETheme(_ThemeBase):
+
     _kd: sklearn.neighbors.KernelDensity
     _log_density_threshold: float  # cutoff for low log densities
     _log_density_maximum: float  # highest log density, used for scaling to 0-1

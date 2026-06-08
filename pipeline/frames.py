@@ -7,15 +7,14 @@ from layers.text import (
 )
 
 from models.colour import Colour
-from generators import Generator
-from generators.palettes import Palette
 from layers.utils import compile_layers
 
 
 
-class Frame:
+class _FrameBase:
 
-    def __init__(self, slide_size: tuple[int, int]):
+    def __init__(self, count: int, slide_size: tuple[int, int]):
+        self.count = count
         self.slide_size = slide_size
         self.sw, self.sh = slide_size
 
@@ -36,7 +35,7 @@ class Frame:
 
 
 
-class SingleFrame(Frame):
+class SingleFrame(_FrameBase):
 
     def construct_frame(self, colours: list[Colour]):
         if not isinstance(colours, Colour) and len(colours) != 1:
@@ -54,7 +53,7 @@ class SingleFrame(Frame):
         return full
 
 
-class HorizontalFrame(Frame):
+class HorizontalFrame(_FrameBase):
 
     def construct_frame(self, colours: list[Colour]):
         if isinstance(colours, Colour) or len(colours) <= 1:
@@ -71,7 +70,7 @@ class HorizontalFrame(Frame):
         return full
 
 
-class VerticalFrame(Frame):
+class VerticalFrame(_FrameBase):
 
     def construct_frame(self, colours: list[Colour]):
         if isinstance(colours, Colour) or len(colours) <= 1:
@@ -88,7 +87,7 @@ class VerticalFrame(Frame):
         return full
 
 
-class TwoByTwoFrame(Frame):
+class TwoByTwoFrame(_FrameBase):
 
     def construct_frame(self, colours: list[Colour]):
         if isinstance(colours, Colour) or len(colours) != 4:
@@ -106,7 +105,7 @@ class TwoByTwoFrame(Frame):
 
 
 
-class FourByFourFrame(Frame):
+class FourByFourFrame(_FrameBase):
 
     def construct_frame(self, colours: list[Colour]):
         if isinstance(colours, Colour) or len(colours) != 16:
@@ -121,11 +120,3 @@ class FourByFourFrame(Frame):
             full.paste(slide, (self.sw*(i // 4), self.sh*(i % 4)))
 
         return full
-
-
-
-
-    
-        
-
-

@@ -15,7 +15,7 @@ import dotenv
 import numpy as np
 
 from generators import RGBGenerator, HSVGenerator, CIELChGenerator
-from generators.palettes import (
+from pipeline.palettes import (
     GradientPalette,
     SinglePalette,
     RandomPalette,
@@ -23,7 +23,7 @@ from generators.palettes import (
     AnalogousPalette,
     TriadicPalette
 )
-from layers.frames import SingleFrame, HorizontalFrame, VerticalFrame, TwoByTwoFrame
+from pipeline.frames import SingleFrame, HorizontalFrame, VerticalFrame, TwoByTwoFrame
 
 dotenv.load_dotenv()
 
