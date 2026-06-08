@@ -4,6 +4,7 @@ from layers.canvas import CanvasLayer
 from layers.text import (
     NameTextLayer,
     HexcodeTextLayer,
+    ThemeTextLayer,
 )
 
 from models.colour import Colour
@@ -21,10 +22,13 @@ class _FrameBase:
     def _construct_slides(self, colours: list[Colour]):
         slides = []
         for i, colour in enumerate(colours):
-            name_layer = NameTextLayer(text=colour.name.upper())
-            hexcode_layer = HexcodeTextLayer(text=colour.hexcode)
-            canvas_layer = CanvasLayer(rgb=colour.rgb)
-            slide = compile_layers(self.slide_size, *[canvas_layer, name_layer, hexcode_layer])
+            layers = []
+            layers.append(CanvasLayer(rgb=colour.rgb))
+            layers.append(HexcodeTextLayer(text=colour.hexcode))
+            layers.append(NameTextLayer(text=colour.name.upper()))
+            # if i == len(colours) - 1:
+            #     layers.append(ThemeTextLayer(text="[THEME TEXT]"))
+            slide = compile_layers(self.slide_size, *layers)
 
             slides.append(slide)
 

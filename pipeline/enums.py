@@ -53,7 +53,7 @@ class Theme(enum.Enum):
         
     @staticmethod
     def choices():
-        return [Theme.DEFAULT.value()]
+        return [Theme.load(f.stem) for f in config.THEME_DIRECTORY.glob('*.rcmt')]
     
 class Palette(enum.Enum):
     RANDOM = _Random

@@ -1,5 +1,4 @@
-import textwrap
-from tkinter import font
+import typing
 
 from PIL import (
     Image,
@@ -47,6 +46,7 @@ BASE_BOTTOM_TEXT_OFFSET = 50
 BASE_RIGHT_TEXT_OFFSET = 60
 TEXT_HEIGHT_FACTOR = 5 / 6
 ADD_BOTTOM_TEXT_OFFSET = int(PRIMARY_FONT_SIZE * TEXT_HEIGHT_FACTOR)
+ADD_BOTTOM_TEXT_OFFSET_2 = ADD_BOTTOM_TEXT_OFFSET + int(SECONDARY_FONT_SIZE * TEXT_HEIGHT_FACTOR) + 30
 
 
 
@@ -54,7 +54,7 @@ ADD_BOTTOM_TEXT_OFFSET = int(PRIMARY_FONT_SIZE * TEXT_HEIGHT_FACTOR)
     Utility function to generate text shadow.
 '''
 def create_text_shadow_sublayer(
-    position: tuple[int, int],
+    position: tuple[float, float],
     text: str,
     font: ImageFont.ImageFont | ImageFont.FreeTypeFont,
     anchor: str,
@@ -77,7 +77,8 @@ def create_text_shadow_sublayer(
 class TextLayer(BaseLayer):
 
     font: ImageFont.FreeTypeFont | ImageFont.ImageFont
-    position_offset: tuple[int, int]
+    position_offset: tuple[float, float]
+    alignment: typing.Literal['nw', 'se'] = 'se'
 
     def __init__(self, text: str):
         # position, font and anchor are hard-coded for each text layer
@@ -93,17 +94,26 @@ class TextLayer(BaseLayer):
         self.text = text
 
     def _create_layer(self, size: tuple[int, int] = DEFAULT_SIZE):
-        position = (
-            size[0] + self.position_offset[0],
-            size[1] + self.position_offset[1]
-        )
+
+        if self.alignment == 'se':
+            position = (
+                size[0] + self.position_offset[0],
+                size[1] + self.position_offset[1]
+            )
+            anchor = 'rb'
+        elif self.alignment == 'nw':
+            position = self.position_offset
+            anchor = 'lt'
+        else:
+            position = (0, 0)
+            raise Exception(f'alignment is not set to a valid value: {self.alignment}')
 
         # create a layer for text shadow
         shadow_layer = create_text_shadow_sublayer(
             position,
             self.text,
             self.font,
-            anchor='rb',
+            anchor=anchor,
             size=size
         )
 
@@ -115,7 +125,7 @@ class TextLayer(BaseLayer):
             self.text,
             font=self.font,
             fill=DEFAULT_WHITE_COLOUR,
-            anchor='rb'
+            anchor=anchor,
         )
 
         # composit the layers
@@ -142,5 +152,27 @@ class HexcodeTextLayer(TextLayer):
         self.position_offset = (
             - BASE_RIGHT_TEXT_OFFSET,
             - BASE_BOTTOM_TEXT_OFFSET
+        )
+        super().__init__(text)
+
+
+# class ThemeTextLayer(TextLayer):
+
+#     def __init__(self, text: str):
+#         self.font = SECONDARY_FONT
+#         self.position_offset = (
+#            50,
+#            50
+#         )
+#         self.alignment = 'nw'
+#         super().__init__(text)
+
+class ThemeTextLayer(TextLayer):
+
+    def __init__(self, text: str):
+        self.font = SECONDARY_FONT
+        self.position_offset = (
+            - BASE_RIGHT_TEXT_OFFSET,
+            - BASE_BOTTOM_TEXT_OFFSET - ADD_BOTTOM_TEXT_OFFSET_2
         )
         super().__init__(text)

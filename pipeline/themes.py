@@ -1,6 +1,7 @@
 import dataclasses
 import pickle
 import random
+import re
 import typing
 
 import numpy as np
@@ -8,6 +9,14 @@ import skimage
 import sklearn.neighbors
 
 from models.colour import Colour
+
+
+def to_tag(name: str) -> str:
+    '''
+    Canonical theme tag: the name lowercased with each run of non-alphanumeric
+    characters collapsed to a single hyphen. Used as the .rcmt filename.
+    '''
+    return re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
 
 
 '''
@@ -25,6 +34,9 @@ class _ThemeBase:
     INVARIANT: typing.ClassVar[bool] = False
 
     name: str
+    desc: str
+    source: str  # where the theme draws from, e.g. 'Arcane'; 'generic' if none
+    tag: str  # lowercase-with-hyphens of the name; used as the filename
 
     def accepted(self, colour: Colour) -> bool:
         raise NotImplementedError
@@ -51,6 +63,9 @@ class DefaultTheme(_ThemeBase):
 
     def __init__(self):
         self.name = "default"
+        self.desc = "default theme"
+        self.source = "generic"
+        self.tag = "default"
 
     def accepted(self, colour: Colour) -> bool:
         return True

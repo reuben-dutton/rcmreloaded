@@ -253,7 +253,7 @@ class Pipeline:
         return self
 
     # generate an image using the current plan
-    def generate(self) -> Image.Image:
+    def generate(self) -> tuple[Image.Image, list[Colour]]:
         plan = self._plan if self._plan is not None else self._resolve_random()
 
         n = plan.n
@@ -266,4 +266,4 @@ class Pipeline:
                 accepted += [colour]
         
         colours = plan.palette.generate(accepted)
-        return plan.frame.construct_frame(colours)
+        return plan.frame.construct_frame(colours), colours
