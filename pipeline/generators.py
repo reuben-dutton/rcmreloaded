@@ -5,7 +5,7 @@ import colorspacious
 import scipy
 import numpy as np
 
-from models.colour import Colour
+from db.schemas import Colour
 
 
 is_valid_color = lambda r, g, b: 0 <= r < 256 and 0 <= g < 256 and 0 <= b < 256

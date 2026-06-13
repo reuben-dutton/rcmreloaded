@@ -6,7 +6,8 @@ import dotenv
 dotenv.load_dotenv()
 
 
-THEME_DIRECTORY = pathlib.Path(r"M:\dev\rcmreloaded\data\themes")
+ROOT = pathlib.Path(__file__).resolve().parent
+DATA_DIRECTORY = ROOT / "data"
 
 ATPROTO_CLIENT_USERNAME = os.getenv("ATPROTO_CLIENT_USERNAME")
 ATPROTO_CLIENT_PASSWORD = os.getenv("ATPROTO_CLIENT_PASSWORD")

@@ -7,7 +7,7 @@ import skimage.color
 from PIL import Image
 
 
-from models.colour import Colour
+from db.schemas import Colour
 from pipeline.generators import (
     _GeneratorBase
 )

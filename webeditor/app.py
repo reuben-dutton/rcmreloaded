@@ -15,7 +15,6 @@ Design notes for performance:
 import pathlib
 
 from fastapi import FastAPI, HTTPException, Response, UploadFile
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -77,10 +76,15 @@ def remove_theme(tag: str):
 
 @app.get('/api/themes/{tag}/file')
 def download_theme(tag: str):
-    path = service.theme_path(tag)
-    if not path.exists():
+    try:
+        data = service.theme_file_bytes(tag)
+    except FileNotFoundError:
         raise HTTPException(404, f'No theme: {tag}')
-    return FileResponse(path, filename=path.name, media_type='application/octet-stream')
+    return Response(
+        data,
+        media_type='application/octet-stream',
+        headers={'Content-Disposition': f'attachment; filename="{tag}.rcmt"'},
+    )
 
 
 # ---------------------------------------------------------------------------

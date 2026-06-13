@@ -6,11 +6,13 @@ call, and preview colours are drawn with a batched version of the bot's
 CIELCh generator (vectorised bisection for the gamut boundary) so previews
 are faithful to what the bot actually posts.
 
-Caching layers (all in-memory, keyed so stale entries can't be served):
+Themes live in the database (see the db package); this module loads, lists,
+saves and deletes them there. Caching layers (all in-memory, keyed so stale
+entries can't be served):
   - uploaded images by content hash
   - fitted KDEs by (image hash, bandwidth, max fit pixels)
   - scored grids by (fit key, grid steps)
-  - library themes and their swatches by (tag, file mtime)
+  - library themes and their swatches by (tag, content hash of the stored blob)
 '''
 
 import hashlib
@@ -26,8 +28,8 @@ import skimage.color
 import sklearn.neighbors
 from PIL import Image
 
-import config
-from models.colour import Colour
+from db import repository, session_scope
+from db.schemas import Colour
 from pipeline.themes import KDETheme, to_tag
 
 
@@ -238,37 +240,40 @@ def sample_accepted(kde: sklearn.neighbors.KernelDensity | None, threshold: floa
 # ---------------------------------------------------------------------------
 # theme library
 
-def theme_path(tag: str):
-    path = (config.THEME_DIRECTORY / f'{tag}.rcmt').resolve()
-    # tags come from URLs - never let one escape the theme directory
-    if path.parent != config.THEME_DIRECTORY.resolve() or path.suffix != '.rcmt':
-        raise ValueError(f'Invalid theme tag: {tag}')
-    return path
+def theme_blob(tag: str) -> bytes:
+    '''Raw serialized theme bytes from the DB; raises if the tag is unknown.'''
+    with session_scope() as session:
+        blob = repository.get_theme_blob(session, tag)
+    if blob is None:
+        raise FileNotFoundError(f'No theme: {tag}')
+    return blob
 
 
 def load_theme(tag: str) -> KDETheme:
-    path = theme_path(tag)
-    mtime = path.stat().st_mtime_ns
+    blob = theme_blob(tag)
+    version = hashlib.sha1(blob).hexdigest()[:16]
     with _lock:
-        cached = _themes.get((tag, mtime))
+        cached = _themes.get((tag, version))
     if cached is not None:
         return cached
-    theme = KDETheme.deserialize(path.read_bytes())
+    theme = KDETheme.deserialize(blob)
     with _lock:
-        _themes[(tag, mtime)] = theme
+        _themes[(tag, version)] = theme
     return theme
 
 
 def list_themes() -> list[dict]:
+    with session_scope() as session:
+        tags = repository.theme_tags(session)
     entries = []
-    for path in sorted(config.THEME_DIRECTORY.glob('*.rcmt')):
+    for tag in tags:
         try:
-            theme = load_theme(path.stem)
+            theme = load_theme(tag)
         except Exception as e:
-            entries.append({'tag': path.stem, 'name': path.stem, 'error': str(e)})
+            entries.append({'tag': tag, 'name': tag, 'error': str(e)})
             continue
         entries.append({
-            'tag': path.stem,
+            'tag': tag,
             'name': theme.name,
             'desc': theme.desc,
             'source': theme.source,
@@ -324,8 +329,8 @@ def swatches_cached(kde_key: str, kde, threshold: float, log_max: float,
 
 
 def theme_kde_key(tag: str) -> str:
-    '''Cache key for a saved theme's KDE: changes whenever the file does.'''
-    return f'theme:{tag}:{theme_path(tag).stat().st_mtime_ns}'
+    '''Cache key for a saved theme's KDE: changes whenever its stored blob does.'''
+    return f'theme:{tag}:{hashlib.sha1(theme_blob(tag)).hexdigest()[:16]}'
 
 
 def theme_swatches(tag: str, n: int) -> list[dict]:
@@ -391,12 +396,21 @@ def save_theme(kde: sklearn.neighbors.KernelDensity, name: str, desc: str,
         _shade_penalty=float(shade_penalty),
         _tint_penalty=float(tint_penalty),
     )
-    theme_path(tag).write_bytes(theme.serialize())
+    with session_scope() as session:
+        repository.upsert_theme(session, theme)
     return {'tag': tag, 'name': theme.name}
 
 
 def delete_theme(tag: str):
-    theme_path(tag).unlink()
+    with session_scope() as session:
+        deleted = repository.delete_theme(session, tag)
+    if not deleted:
+        raise FileNotFoundError(f'No theme: {tag}')
+
+
+def theme_file_bytes(tag: str) -> bytes:
+    '''Serialized theme for download as a .rcmt file; raises if unknown.'''
+    return theme_blob(tag)
 
 
 # ---------------------------------------------------------------------------

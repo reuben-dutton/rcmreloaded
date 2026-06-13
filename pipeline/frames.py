@@ -7,7 +7,7 @@ from layers.text import (
     ThemeTextLayer,
 )
 
-from models.colour import Colour
+from db.schemas import Colour
 from layers.utils import compile_layers
 
 

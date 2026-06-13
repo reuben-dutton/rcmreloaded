@@ -12,6 +12,10 @@ Requires Python 3.12+ and [Poetry](https://python-poetry.org/):
 poetry install
 ```
 
+Colours and themes live in a SQLite database at `data/rcm.db`, which both
+generation and the editor read from. (To rebuild the colour-naming lookup tree
+after changing the colour set, run `tools/build_tree.ipynb`.)
+
 To post to Bluesky, create a `.env` in the repo root:
 
 ```
@@ -40,8 +44,8 @@ up backend changes without a restart.
 
 Three tabs:
 
-- **Library** — browse, search, edit, download, or delete the themes in
-  `data/themes/`.
+- **Library** — browse, search, edit, download, or delete the themes stored
+  in the database. (Saving and deleting here affect what the bot posts.)
 - **Editor** — create a theme from an image (drop one on the dropzone) or
   edit an existing one. Fit sliders refit the model server-side; the shape
   sliders (threshold, saturation/shade/tint penalties) run on the GPU and
@@ -61,9 +65,22 @@ image, colours = (
     Pipeline()
     .filter(Theme.load('sunset') | Theme.load('vaporwave'))  # | mixes themes
     .palette(Palette.RANDOM)
-    .generate({'blank': False, 'min_delta_e': 15})  # min CIEDE2000 between samples
+    .layout(Frame.RANDOM)
+    .sample(Sample.RANDOM)
+    .options(min_delta_e=15, blank=False)  # generation options
+    .generate()
 )
 ```
 
-Unset stages resolve randomly; see `pipeline/enums.py` for all generators,
-palettes, frames, and sample counts.
+Generation options moved to a dedicated `.options()` step — `generate()` no
+longer takes any arguments:
+
+- `min_delta_e` — minimum CIEDE2000 distance enforced between sampled colours,
+  so multi-sample frames can't come out near-identical (default `0`, off).
+- `blank` — render frames as plain colour panels, without the name/hex
+  annotations (default `False`).
+
+The builder stages — `.filter()` (theme), `.palette()`, `.sample()`,
+`.layout()` (frame), and `.options()` — are all optional; unset stages resolve
+randomly. See `pipeline/enums.py` for all generators, palettes, frames, and
+sample counts.

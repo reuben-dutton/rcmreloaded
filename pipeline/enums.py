@@ -1,6 +1,7 @@
 import enum
 
-import config
+from db import session_scope
+from db.repository import all_themes, get_theme
 from pipeline.generators import (
     RGBGenerator,
     HSVGenerator,
@@ -62,12 +63,16 @@ class Theme(enum.Enum):
 
     @staticmethod
     def load(tag) -> KDETheme:
-        with open(config.THEME_DIRECTORY / f'{tag}.rcmt', 'rb') as f:
-            return KDETheme.deserialize(f.read())
-        
+        with session_scope() as session:
+            theme = get_theme(session, tag)
+        if theme is None:
+            raise KeyError(f'No theme: {tag}')
+        return theme
+
     @staticmethod
     def choices():
-        return [Theme.load(f.stem) for f in config.THEME_DIRECTORY.glob('*.rcmt')]
+        with session_scope() as session:
+            return all_themes(session)
     
 class Palette(enum.Enum):
     RANDOM = _Random

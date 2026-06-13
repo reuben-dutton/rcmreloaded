@@ -2,7 +2,7 @@ from ctypes import ArgumentError
 
 import coloraide
 
-from models.colour import Colour
+from db.schemas import Colour
 
 
 

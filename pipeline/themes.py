@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import pickle
 import random
@@ -8,7 +10,10 @@ import numpy as np
 import skimage
 import sklearn.neighbors
 
-from models.colour import Colour
+if typing.TYPE_CHECKING:
+    # Colour is only referenced in annotations here; a runtime import would make
+    # pipeline depend on db (db.repository imports KDETheme from this module).
+    from db.schemas import Colour
 
 
 def to_tag(name: str) -> str:
