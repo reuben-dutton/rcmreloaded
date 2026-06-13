@@ -3,6 +3,7 @@ import dataclasses
 import itertools
 
 import numpy as np
+import skimage.color
 from PIL import Image
 
 
@@ -29,6 +30,9 @@ from pipeline.enums import (
 
 
 MAX_THEME_ACCEPTANCE_ITERATIONS = 100000
+# bail early if this many consecutive candidates are rejected: the region is
+# saturated and the remaining budget would be wasted
+MAX_STALL_ITERATIONS = 15000
 
 
 
@@ -126,6 +130,7 @@ class Pipeline:
     _sample: SampleOp | None
     _frame: FrameOp | None
     _plan: Plan | None
+    _options: dict
 
     def __init__(self):
         self._source = None
@@ -134,6 +139,7 @@ class Pipeline:
         self._sample = None
         self._frame = None
         self._plan = None
+        self._options = {}
 
     @property
     def _resolved(self) -> bool:
@@ -171,6 +177,11 @@ class Pipeline:
         if self._frame:
             raise Exception('Frame is already defined.')
         self._frame = FrameOp(f)
+        return self
+
+    # configure generation options applied when generate() is called
+    def options(self, *, min_delta_e: int = 0, blank: bool = False) -> "Pipeline":
+        self._options = {'min_delta_e': min_delta_e, 'blank': blank}
         return self
     
     # generate a list of possible plans
@@ -215,15 +226,24 @@ class Pipeline:
     def _resolve_random(self) -> Plan:
         choices = self._resolve()
 
-        # target probability mass for each palette shape
+        # relative probability mass for each palette shape
+        # (normalised below, so only the ratios matter)
         desired = {
             (1, 1): 0.2,
             (1, 2): 0.15,
+            (1, 3): 0.1,
+            (1, 4): 0.1,
             (2, 2): 0.125,
             (2, 3): 0.125,
             (2, 4): 0.15,
             (3, 3): 0.125,
             (4, 4): 0.125,
+            (1, 9): 0.04,
+            (2, 9): 0.03,
+            (9, 9): 0.03,
+            (1, 16): 0.02,
+            (2, 16): 0.03,
+            (16, 16): 0.02,
         }
 
         # count how many choices share each shape so we can dilute
@@ -236,6 +256,10 @@ class Pipeline:
             desired.get(choice.palette.shape, 0) /
             counts[choice.palette.shape] for choice in choices
         ])
+        if weights.sum() == 0:
+            # every valid plan has a shape with no assigned mass (e.g. an
+            # explicitly requested palette): fall back to a uniform pick
+            weights = np.ones(len(choices))
         weights = weights / weights.sum()
 
         plan = np.random.choice(np.array(choices), replace=False, p=weights)
@@ -256,14 +280,41 @@ class Pipeline:
     def generate(self) -> tuple[Image.Image, list[Colour]]:
         plan = self._plan if self._plan is not None else self._resolve_random()
 
+        # minimum CIEDE2000 distance enforced between sampled colours, so
+        # multi-sample frames can't come out with near-identical colours
+        min_delta_e = self._options.get('min_delta_e', 0)
+
         n = plan.n
         accepted: list[Colour] = []
+        accepted_lab: list[np.ndarray] = []
         i = 0
+        stall = 0
         while len(accepted) < n and i < MAX_THEME_ACCEPTANCE_ITERATIONS:
             i += 1
+            stall += 1
+            if stall > MAX_STALL_ITERATIONS:
+                break
             colour = plan.generator.single()
-            if plan.theme.accepted(colour):
-                accepted += [colour]
-        
+            if not plan.theme.accepted(colour):
+                continue
+            if min_delta_e > 0:
+                lab = skimage.color.rgb2lab(np.array(colour.rgb1).reshape(1, 1, 3)).reshape(3)
+                if accepted_lab and skimage.color.deltaE_ciede2000(
+                    np.stack(accepted_lab), lab.reshape(1, 3),
+                ).min() < min_delta_e:
+                    continue
+                accepted_lab.append(lab)
+            accepted += [colour]
+            stall = 0
+
+        if len(accepted) < n:
+            raise Exception(
+                f'Only sampled {len(accepted)}/{n} colours within {i} '
+                f'iterations. The theme region is likely too small to hold '
+                f'{n} colours '
+                f'{f"at min_delta_e={min_delta_e}" if min_delta_e else ""}'.rstrip()
+                + ' - lower min_delta_e, sample fewer colours, or widen the theme.'
+            )
+
         colours = plan.palette.generate(accepted)
-        return plan.frame.construct_frame(colours), colours
+        return plan.frame.construct_frame(colours, blank=self._options.get('blank', False)), colours

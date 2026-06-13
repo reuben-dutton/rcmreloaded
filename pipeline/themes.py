@@ -40,7 +40,7 @@ class _ThemeBase:
 
     def accepted(self, colour: Colour) -> bool:
         raise NotImplementedError
-    
+
 
     def serialize(self) -> bytes:
         raise NotImplementedError
@@ -48,6 +48,11 @@ class _ThemeBase:
     @classmethod
     def deserialize(cls, data: bytes) -> "_ThemeBase":
         raise NotImplementedError
+
+    def __or__(self, other: "_ThemeBase") -> "CombinedTheme":
+        if not isinstance(other, _ThemeBase):
+            return NotImplemented
+        return CombinedTheme([self, other])
     
 
 
@@ -92,18 +97,24 @@ class KDETheme(_ThemeBase):
     _log_density_threshold: float  # cutoff for low log densities
     _log_density_maximum: float  # highest log density, used for scaling to 0-1
     _saturation_penalty: float  # penalty to log density for unsaturated colours
+    _shade_penalty: float = 0.0  # penalty for darker colours (HWB blackness)
+    _tint_penalty: float = 0.0  # penalty for lighter colours (HWB whiteness)
 
     def _scaled_log_density(self, colour: Colour) -> float:
         '''
         Score a colour against the KDE and scale the result to [0, 1],
-        applying the same saturation penalty used when the theme was built.
+        applying the same saturation/shade/tint penalties used when the
+        theme was built.
         '''
         rgb1 = np.array(colour.rgb1).reshape(1, 1, 3)
         lab = skimage.color.rgb2lab(rgb1).reshape(1, 3)
         log_density = self._kd.score_samples(lab)
 
-        saturation = skimage.color.rgb2hsv(rgb1).reshape(1, 3)[:, 1]
-        log_density -= self._saturation_penalty * (1 - saturation)
+        # HSV saturation, HWB blackness (1 - max) and whiteness (min)
+        hsv = skimage.color.rgb2hsv(rgb1).reshape(1, 3)
+        log_density -= self._saturation_penalty * (1 - hsv[:, 1])
+        log_density -= self._shade_penalty * (1 - hsv[:, 2])
+        log_density -= self._tint_penalty * rgb1.min()
 
         scaled = (
             (log_density - self._log_density_threshold) /
@@ -120,6 +131,65 @@ class KDETheme(_ThemeBase):
 
     @classmethod
     def deserialize(cls, data: bytes) -> "KDETheme":
+        theme = pickle.loads(data)
+        # themes pickled before these penalties existed load without the
+        # attributes (pickle bypasses __init__, so field defaults never run)
+        for attr in ('_shade_penalty', '_tint_penalty'):
+            if not hasattr(theme, attr):
+                setattr(theme, attr, 0.0)
+        return theme
+
+
+
+'''
+A mix of two or more themes, built with the | operator:
+
+    Theme.load('sunset') | Theme.load('vaporwave')
+
+Each accepted colour is drawn from one member chosen uniformly at random:
+a member is picked, candidates are tested against it alone until one is
+accepted, then a fresh member is picked. Every accepted colour therefore
+has equal probability of coming from each theme (the split within a single
+generation is multinomial, not forced to be exactly even), rather than
+being dominated by whichever theme has the larger acceptance region.
+'''
+
+@dataclasses.dataclass
+class CombinedTheme(_ThemeBase):
+
+    _themes: list
+
+    def __init__(self, themes: list[_ThemeBase]):
+        # flatten nested combinations so a | b | c stays one level deep
+        flat: list[_ThemeBase] = []
+        for theme in themes:
+            if isinstance(theme, CombinedTheme):
+                flat.extend(theme._themes)
+            else:
+                flat.append(theme)
+        self._themes = flat
+        self._active = random.randrange(len(flat))
+
+        self.name = ' + '.join(theme.name for theme in flat)
+        self.desc = ' | '.join(theme.desc for theme in flat if theme.desc)
+        # deduplicate sources, preserving order
+        sources = dict.fromkeys(
+            theme.source for theme in flat if theme.source != 'generic'
+        )
+        self.source = ', '.join(sources) or 'generic'
+        self.tag = to_tag(self.name)
+
+    def accepted(self, colour: Colour) -> bool:
+        if self._themes[self._active].accepted(colour):
+            self._active = random.randrange(len(self._themes))
+            return True
+        return False
+
+    def serialize(self) -> bytes:
+        return pickle.dumps(self)
+
+    @classmethod
+    def deserialize(cls, data: bytes) -> "CombinedTheme":
         return pickle.loads(data)
 
 

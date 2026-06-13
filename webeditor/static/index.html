@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RCM Theme Studio</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "./vendor/addons/"
+  }
+}
+</script>
+</head>
+<body>
+
+<header>
+  <div class="logo">rcm<span>theme studio</span></div>
+  <nav>
+    <button id="nav-library" class="nav-btn active">Library</button>
+    <button id="nav-editor" class="nav-btn">Editor</button>
+    <button id="nav-mixer" class="nav-btn">Mixer</button>
+  </nav>
+  <button id="new-theme-btn" class="accent-btn">+ New theme</button>
+</header>
+
+<!-- ───────────────────────── library ───────────────────────── -->
+<main id="library-view">
+  <div class="search-bar">
+    <input type="search" id="theme-search" placeholder="Search themes…" autocomplete="off">
+  </div>
+  <div id="library-grid" class="card-grid"></div>
+  <div id="library-empty" class="empty hidden">No themes yet — create one!</div>
+  <div id="search-empty" class="empty hidden">No themes match your search.</div>
+</main>
+
+<!-- ───────────────────────── editor ───────────────────────── -->
+<main id="editor-view" class="hidden">
+  <aside id="controls">
+    <div id="editing-banner" class="banner hidden"></div>
+
+    <section>
+      <h3>Source image</h3>
+      <div id="dropzone">
+        <span id="dropzone-label">Drop an image here<br>or click to browse</span>
+        <input type="file" id="file-input" accept="image/*">
+      </div>
+      <div id="image-status" class="status"></div>
+    </section>
+
+    <section id="fit-params">
+      <h3>Fit <span class="hint">(server, refits the model)</span></h3>
+      <label>Bandwidth <output id="bandwidth-out">3</output></label>
+      <input type="range" id="bandwidth" min="1" max="20" step="0.5" value="3" disabled>
+      <label>Grid resolution <output id="steps-out">20</output></label>
+      <input type="range" id="steps" min="8" max="32" step="4" value="20" disabled>
+      <label>Max fit pixels <output id="maxpx-out">20000</output></label>
+      <input type="range" id="maxpx" min="5000" max="50000" step="5000" value="20000" disabled>
+    </section>
+
+    <section>
+      <h3>Shape <span class="hint">(instant, on the GPU)</span></h3>
+      <label>Threshold <output id="threshold-out">-15</output></label>
+      <input type="range" id="threshold" min="-50" max="-1" step="0.5" value="-15">
+      <label>Saturation penalty <output id="penalty-out">0</output></label>
+      <input type="range" id="penalty" min="0" max="30" step="0.5" value="0">
+      <label>Shade penalty <span class="hint">(darker)</span> <output id="shade-out">0</output></label>
+      <input type="range" id="shade" min="0" max="30" step="0.5" value="0">
+      <label>Tint penalty <span class="hint">(lighter)</span> <output id="tint-out">0</output></label>
+      <input type="range" id="tint" min="0" max="30" step="0.5" value="0">
+    </section>
+
+    <section>
+      <h3>Details</h3>
+      <input type="text" id="theme-name" placeholder="Theme name" maxlength="60">
+      <input type="text" id="theme-source" placeholder="Source (e.g. Arcane) — blank for generic">
+      <textarea id="theme-desc" placeholder="Description (optional)" rows="3"></textarea>
+      <button id="save-btn" class="accent-btn wide" disabled>Save to library</button>
+      <div id="save-status" class="status"></div>
+    </section>
+  </aside>
+
+  <div id="viewer-wrap">
+    <canvas id="viewer"></canvas>
+    <div id="viewer-hint" class="viewer-hint">drop an image or open a theme from the library</div>
+  </div>
+
+  <aside id="preview-panel">
+    <section>
+      <h3>Grid sample</h3>
+      <button id="grid-sample-btn" class="ghost-btn wide">Sample 10 × 10</button>
+      <div id="grid-sample" class="grid-sample"></div>
+    </section>
+    <section>
+      <h3>Frame preview</h3>
+      <select id="layout-select">
+        <option value="single">Single</option>
+        <option value="double-horizontal">Double · horizontal</option>
+        <option value="double-vertical">Double · vertical</option>
+        <option value="triple-horizontal" selected>Triple · horizontal</option>
+        <option value="triple-vertical">Triple · vertical</option>
+        <option value="quad-horizontal">Quad · horizontal</option>
+        <option value="quad-vertical">Quad · vertical</option>
+        <option value="quad-grid">Quad · grid</option>
+        <option value="nine-grid">Grid · 3 × 3</option>
+        <option value="sixteen-grid">Grid · 4 × 4</option>
+        <option value="thirds-right">Thirds · right</option>
+        <option value="thirds-left">Thirds · left</option>
+        <option value="thirds-bottom">Thirds · bottom</option>
+        <option value="thirds-top">Thirds · top</option>
+        <option value="split-right">Split · right</option>
+        <option value="split-left">Split · left</option>
+        <option value="split-bottom">Split · bottom</option>
+        <option value="split-top">Split · top</option>
+      </select>
+      <button id="frame-btn" class="ghost-btn wide">Generate preview</button>
+      <div id="frame-preview"></div>
+    </section>
+    <section>
+      <h3>Sampled colours</h3>
+      <div id="swatch-list" class="swatches"></div>
+    </section>
+  </aside>
+</main>
+
+<!-- ───────────────────────── mixer ───────────────────────── -->
+<main id="mixer-view" class="hidden">
+  <aside id="mix-panel">
+    <section>
+      <h3>Themes to mix</h3>
+      <div id="mix-list"></div>
+    </section>
+  </aside>
+  <div id="mix-content">
+    <h2 id="mix-title" class="mix-title">Select themes to mix</h2>
+    <section>
+      <h3>Grid sample</h3>
+      <div id="mix-grid" class="grid-sample mix-grid"></div>
+      <div id="mix-grid-status" class="status"></div>
+    </section>
+    <section>
+      <h3>Frame preview</h3>
+      <div class="mix-frame-controls">
+        <select id="mix-layout">
+          <option value="single">Single</option>
+          <option value="double-horizontal">Double · horizontal</option>
+          <option value="double-vertical">Double · vertical</option>
+          <option value="triple-horizontal" selected>Triple · horizontal</option>
+          <option value="triple-vertical">Triple · vertical</option>
+          <option value="quad-horizontal">Quad · horizontal</option>
+          <option value="quad-vertical">Quad · vertical</option>
+          <option value="quad-grid">Quad · grid</option>
+          <option value="nine-grid">Grid · 3 × 3</option>
+          <option value="sixteen-grid">Grid · 4 × 4</option>
+          <option value="thirds-right">Thirds · right</option>
+          <option value="thirds-left">Thirds · left</option>
+          <option value="thirds-bottom">Thirds · bottom</option>
+          <option value="thirds-top">Thirds · top</option>
+          <option value="split-right">Split · right</option>
+          <option value="split-left">Split · left</option>
+          <option value="split-bottom">Split · bottom</option>
+          <option value="split-top">Split · top</option>
+        </select>
+        <button id="mix-frame-btn" class="ghost-btn">Generate preview</button>
+      </div>
+      <div id="mix-frame"></div>
+    </section>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

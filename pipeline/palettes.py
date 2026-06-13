@@ -76,6 +76,12 @@ class GradientPalette(_PaletteBase):
         return output
 
 
+def _rotated(base: "coloraide.Color", degrees: float) -> Colour:
+    '''The base oklch colour with its hue rotated, as a Colour.'''
+    rotated = base.clone().set('h', base['h'] + degrees).convert('srgb')
+    return Colour.from_hex(rotated.to_string(hex=True))
+
+
 class ComplementaryPalette(_PaletteBase):
 
     def __init__(self, shape: tuple[int, int]):
@@ -85,13 +91,8 @@ class ComplementaryPalette(_PaletteBase):
 
     def _reshape(self, input: list[Colour]) -> list[Colour]:
         start = input[0]
-
-        start_c = coloraide.Color(start.hexcode).convert("oklch")
-        end_c = start_c.set('h', start_c['h'] + 180).convert('srgb')
-
-        end = Colour.from_hex(end_c.to_string(hex=True))
-
-        return [start, end]
+        base = coloraide.Color(start.hexcode).convert('oklch')
+        return [start, _rotated(base, 180)]
 
 
 class AnalogousPalette(_PaletteBase):
@@ -103,15 +104,8 @@ class AnalogousPalette(_PaletteBase):
 
     def _reshape(self, input: list[Colour]) -> list[Colour]:
         start = input[0]
-
-        start_c = coloraide.Color(start.hexcode).convert("oklch")
-        one_c = start_c.set('h', start_c['h'] + 30).convert('srgb')
-        two_c = start_c.set('h', start_c['h'] + 30).convert('srgb')
-
-        one = Colour.from_hex(one_c.to_string(hex=True))
-        two = Colour.from_hex(two_c.to_string(hex=True))
-
-        return [start, one, two]
+        base = coloraide.Color(start.hexcode).convert('oklch')
+        return [_rotated(base, -30), start, _rotated(base, 30)]
 
 
 class TriadicPalette(_PaletteBase):
@@ -123,13 +117,97 @@ class TriadicPalette(_PaletteBase):
 
     def _reshape(self, input: list[Colour]) -> list[Colour]:
         start = input[0]
+        base = coloraide.Color(start.hexcode).convert('oklch')
+        return [start, _rotated(base, 120), _rotated(base, 240)]
 
-        start_c = coloraide.Color(start.hexcode).convert("oklch")
-        one_c = start_c.set('h', start_c['h'] + 120).convert('srgb')
-        two_c = start_c.set('h', start_c['h'] + 120).convert('srgb')
 
-        one = Colour.from_hex(one_c.to_string(hex=True))
-        two = Colour.from_hex(two_c.to_string(hex=True))
+'''
+    Base colour plus the two colours either side of its complement:
+    softer contrast than a straight complementary pair.
+'''
+class SplitComplementaryPalette(_PaletteBase):
 
-        return [start, one, two]
+    def __init__(self, shape: tuple[int, int]):
+        if shape != (1, 3):
+            raise ArgumentError('Shape must be (1, 3) for SplitComplementaryPalette')
+        super().__init__(shape)
+
+    def _reshape(self, input: list[Colour]) -> list[Colour]:
+        start = input[0]
+        base = coloraide.Color(start.hexcode).convert('oklch')
+        return [start, _rotated(base, 150), _rotated(base, -150)]
+
+
+'''
+    Four hues evenly spaced around the wheel (a square tetrad).
+'''
+class TetradicPalette(_PaletteBase):
+
+    def __init__(self, shape: tuple[int, int]):
+        if shape != (1, 4):
+            raise ArgumentError('Shape must be (1, 4) for TetradicPalette')
+        super().__init__(shape)
+
+    def _reshape(self, input: list[Colour]) -> list[Colour]:
+        start = input[0]
+        base = coloraide.Color(start.hexcode).convert('oklch')
+        return [start, _rotated(base, 90), _rotated(base, 180), _rotated(base, 270)]
+
+
+'''
+    Three muted, slightly hue-shifted variants of the base, then the base
+    itself at boosted chroma as the accent.
+'''
+class AccentPalette(_PaletteBase):
+
+    MUTED_CHROMA_FACTOR = 0.3
+    ACCENT_CHROMA = 0.25  # oklch chroma floor for the accent
+
+    def __init__(self, shape: tuple[int, int]):
+        if shape != (1, 4):
+            raise ArgumentError('Shape must be (1, 4) for AccentPalette')
+        super().__init__(shape)
+
+    def _reshape(self, input: list[Colour]) -> list[Colour]:
+        start = input[0]
+        base = coloraide.Color(start.hexcode).convert('oklch')
+
+        output = []
+        for hue_shift, light_shift in ((-25, 0.12), (0, 0), (25, -0.12)):
+            muted = base.clone()
+            muted.set('h', base['h'] + hue_shift)
+            muted.set('c', base['c'] * self.MUTED_CHROMA_FACTOR)
+            muted.set('l', min(max(base['l'] + light_shift, 0.15), 0.92))
+            output.append(Colour.from_hex(muted.convert('srgb').to_string(hex=True)))
+
+        accent = base.clone().set('c', max(base['c'], self.ACCENT_CHROMA))
+        output.append(Colour.from_hex(accent.convert('srgb').to_string(hex=True)))
+        return output
+
+
+'''
+    A ramp through the base colour's shades (mixed toward black) and tints
+    (mixed toward white), darkest to lightest. Mixing happens in oklab so the
+    steps are perceptually even; the ends stop short of pure black/white.
+'''
+class ShadesTintsPalette(_PaletteBase):
+
+    MAX_MIX = 0.8  # how far the ramp ends reach toward black/white
+
+    def _reshape(self, input: list[Colour]) -> list[Colour]:
+        start = input[0]
+        base = coloraide.Color(start.hexcode)
+        n = self.shape[1]
+
+        output = []
+        for i in range(n):
+            position = (i / (n - 1)) * 2 - 1  # -1 (shade) .. +1 (tint)
+            if position < 0:
+                mixed = base.mix('black', -position * self.MAX_MIX, space='oklab')
+            elif position > 0:
+                mixed = base.mix('white', position * self.MAX_MIX, space='oklab')
+            else:
+                mixed = base.clone()
+            output.append(Colour.from_hex(mixed.convert('srgb').to_string(hex=True)))
+        return output
 

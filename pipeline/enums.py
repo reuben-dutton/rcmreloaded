@@ -16,12 +16,26 @@ from pipeline.palettes import (
     ComplementaryPalette,
     AnalogousPalette,
     TriadicPalette,
+    SplitComplementaryPalette,
+    TetradicPalette,
+    AccentPalette,
+    ShadesTintsPalette,
 )
 from pipeline.frames import (
     SingleFrame,
     HorizontalFrame,
     VerticalFrame,
     TwoByTwoFrame,
+    ThreeByThreeFrame,
+    FourByFourFrame,
+    ThirdsRightFrame,
+    ThirdsLeftFrame,
+    ThirdsBottomFrame,
+    ThirdsTopFrame,
+    SplitRightFrame,
+    SplitLeftFrame,
+    SplitBottomFrame,
+    SplitTopFrame,
 )
 
 
@@ -62,11 +76,21 @@ class Palette(enum.Enum):
     DEFAULT_TWO = DefaultPalette((2, 2))
     DEFAULT_THREE = DefaultPalette((3, 3))
     DEFAULT_FOUR = DefaultPalette((4, 4))
+    DEFAULT_NINE = DefaultPalette((9, 9))
+    DEFAULT_SIXTEEN = DefaultPalette((16, 16))
     GRADIENT_PLUS_ONE = GradientPalette((2, 3))
     GRADIENT_PLUS_TWO = GradientPalette((2, 4))
     COMPLEMENTARY = ComplementaryPalette((1, 2))
     ANALOGOUS = AnalogousPalette((1, 3))
     TRIADIC = TriadicPalette((1, 3))
+    SPLIT_COMPLEMENTARY = SplitComplementaryPalette((1, 3))
+    TETRADIC = TetradicPalette((1, 4))
+    ACCENT = AccentPalette((1, 4))
+    SHADES_TINTS = ShadesTintsPalette((1, 4))
+    SHADES_TINTS_NINE = ShadesTintsPalette((1, 9))
+    SHADES_TINTS_SIXTEEN = ShadesTintsPalette((1, 16))
+    GRADIENT_NINE = GradientPalette((2, 9))
+    GRADIENT_SIXTEEN = GradientPalette((2, 16))
 
     @staticmethod
     def choices():
@@ -79,6 +103,8 @@ class Palette(enum.Enum):
             Palette.DEFAULT_TWO.value,
             Palette.DEFAULT_THREE.value,
             Palette.DEFAULT_FOUR.value,
+            Palette.DEFAULT_NINE.value,
+            Palette.DEFAULT_SIXTEEN.value,
         ]
 
 
@@ -101,6 +127,16 @@ class Frame(enum.Enum):
     QUAD_HORIZONTAL = HorizontalFrame(4, (600, 2400))
     QUAD_VERTICAL = VerticalFrame(4, (2400, 600))
     QUAD_GRID = TwoByTwoFrame(4, (800, 800))
+    NINE_GRID = ThreeByThreeFrame(9, (800, 800))
+    SIXTEEN_GRID = FourByFourFrame(16, (600, 600))
+    THIRDS_RIGHT = ThirdsRightFrame(2, (600, 1800))
+    THIRDS_LEFT = ThirdsLeftFrame(2, (600, 1800))
+    THIRDS_BOTTOM = ThirdsBottomFrame(2, (1800, 600))
+    THIRDS_TOP = ThirdsTopFrame(2, (1800, 600))
+    SPLIT_RIGHT = SplitRightFrame(3, (600, 600))
+    SPLIT_LEFT = SplitLeftFrame(3, (600, 600))
+    SPLIT_BOTTOM = SplitBottomFrame(3, (600, 600))
+    SPLIT_TOP = SplitTopFrame(3, (600, 600))
 
     @staticmethod
     def choices():
@@ -114,11 +150,25 @@ class Frame(enum.Enum):
     
     @staticmethod
     def doubles():
-        return [Frame.DOUBLE_HORIZONTAL.value, Frame.DOUBLE_VERTICAL]
-    
+        return [
+            Frame.DOUBLE_HORIZONTAL.value,
+            Frame.DOUBLE_VERTICAL.value,
+            Frame.THIRDS_RIGHT.value,
+            Frame.THIRDS_LEFT.value,
+            Frame.THIRDS_BOTTOM.value,
+            Frame.THIRDS_TOP.value,
+        ]
+
     @staticmethod
     def triples():
-        return [Frame.TRIPLE_HORIZONTAL.value, Frame.TRIPLE_VERTICAL.value]
+        return [
+            Frame.TRIPLE_HORIZONTAL.value,
+            Frame.TRIPLE_VERTICAL.value,
+            Frame.SPLIT_RIGHT.value,
+            Frame.SPLIT_LEFT.value,
+            Frame.SPLIT_BOTTOM.value,
+            Frame.SPLIT_TOP.value,
+        ]
     
     @staticmethod
     def quads():
@@ -131,6 +181,8 @@ class Sample(enum.Enum):
     TWO = 2
     THREE = 3
     FOUR = 4
+    NINE = 9
+    SIXTEEN = 16
 
     @staticmethod
     def choices():

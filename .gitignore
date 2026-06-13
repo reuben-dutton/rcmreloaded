@@ -5,3 +5,4 @@ fonts/*
 *.webp
 .python-version
 */__pycache__
+webeditor/cache/
