@@ -8,6 +8,10 @@ from PIL import Image
 
 
 from core.colours import Colour
+from core.colours.library import (
+    ColourLibrary,
+    colours,
+)
 from core.pipeline.generators import (
     _GeneratorBase
 )
@@ -24,9 +28,14 @@ from core.themes import (
 from core.pipeline.enums import (
     Generator,
     Theme,
+    _ThemeLoad,
     Palette,
     Frame,
     Sample,
+)
+from core.themes.library import (
+    ThemeLibrary,
+    themes
 )
 
 
@@ -41,21 +50,29 @@ MAX_STALL_ITERATIONS = 15000
 class SourceOp:
     generator: Generator
 
-    def resolve(self):
+    def resolve(self, library: ColourLibrary):
         if self.generator == Generator.RANDOM:
-            return Generator.choices()
-        return [self.generator.value()]
+            return Generator.choices(library)
+        # only other is the default
+        return [self.generator.value(library)]
 
         
 @dataclasses.dataclass
 class ThemeOp:
-    theme: Theme | ThemeContainer
+    theme: Theme | ThemeContainer | _ThemeLoad
 
-    def resolve(self):
+    def resolve(self, library: ThemeLibrary):
         if isinstance(self.theme, ThemeContainer):
             return [self.theme]
+        # if we've provided a container for lazy loading themes,
+        # attempt to load from the given library
+        if isinstance(self.theme, _ThemeLoad):
+            theme = library.get(self.theme.tag)
+            if not theme:
+                raise KeyError(f"'{self.theme.tag}' was not found in given library")
+            return [theme]
         if self.theme == Theme.RANDOM:
-            return Theme.choices()
+            return Theme.choices(library)
         # Theme.DEFAULT
         return [default_theme()]
     
@@ -135,6 +152,8 @@ class Pipeline:
     _options: dict
 
     def __init__(self):
+        self._clibrary = colours
+        self._tlibrary = themes
         self._source = None
         self._theme = None
         self._palette = None
@@ -153,7 +172,7 @@ class Pipeline:
         instance._source = SourceOp(g)
         return instance
     
-    def filter(self, t: Theme | ThemeContainer) -> "Pipeline":
+    def filter(self, t: Theme | ThemeContainer | _ThemeLoad) -> "Pipeline":
         if self._theme:
             raise Exception('Theme is already defined.')
         self._theme = ThemeOp(t)
@@ -182,8 +201,20 @@ class Pipeline:
         return self
 
     # configure generation options applied when generate() is called
-    def options(self, *, min_delta_e: int = 0, blank: bool = False) -> "Pipeline":
-        self._options = {'min_delta_e': min_delta_e, 'blank': blank}
+    def options(
+            self,
+            *,
+            min_delta_e: int = 0,
+            blank: bool = False,
+            clibrary: ColourLibrary = colours,
+            tlibrary: ThemeLibrary = themes,
+        ) -> "Pipeline":
+        self._options = {
+            'min_delta_e': min_delta_e,
+            'blank': blank
+        }
+        self._clibrary = clibrary
+        self._tlibrary = tlibrary
         return self
     
     # generate a list of possible plans
@@ -204,8 +235,8 @@ class Pipeline:
         # now we get all choices for each
         options = [
             Plan(*option) for option in itertools.product(
-                self._source.resolve(),
-                self._theme.resolve(),
+                self._source.resolve(self._clibrary),
+                self._theme.resolve(self._tlibrary),
                 self._palette.resolve(),
                 self._sample.resolve(),
                 self._frame.resolve()

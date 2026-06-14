@@ -5,7 +5,7 @@ import colorspacious
 import scipy
 import numpy as np
 
-from core.colours import colours
+from core.colours import ColourLibrary
 from core.colours import Colour
 
 
@@ -13,6 +13,9 @@ is_valid_color = lambda r, g, b: 0 <= r < 256 and 0 <= g < 256 and 0 <= b < 256
 
 
 class _GeneratorBase:
+
+    def __init__(self, library: ColourLibrary):
+        self._clibrary = library
 
     def single(self) -> Colour:
         raise NotImplementedError
@@ -26,7 +29,7 @@ class _GeneratorBase:
 class RGBGenerator(_GeneratorBase):
     def single(self) -> Colour:
         rgb = tuple(np.random.randint(0, 256, 3))
-        return colours.make(rgb)
+        return self._clibrary.make(rgb)
 
 
 
@@ -36,7 +39,7 @@ class HSVGenerator(_GeneratorBase):
         s = np.random.rand()
         v = np.random.rand()
         r, g, b = colorsys.hsv_to_rgb(h, s, v)
-        return colours.make((int(r*255), int(g*255), int(b*255)))
+        return self._clibrary.make((int(r*255), int(g*255), int(b*255)))
 
 
 
@@ -105,4 +108,4 @@ class CIELChGenerator(_GeneratorBase):
         # clip and convert to int
         rgb = np.clip(rgb, MIN_VALUE_RGB, MAX_VALUE_RGB).astype(int)
         
-        return colours.make(tuple(rgb))
+        return self._clibrary.make(tuple(rgb))

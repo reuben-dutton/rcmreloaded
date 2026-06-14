@@ -1,5 +1,6 @@
 import enum
 
+from core.colours import ColourLibrary
 from core.pipeline.generators import (
     RGBGenerator,
     HSVGenerator,
@@ -33,11 +34,16 @@ from core.pipeline.frames import (
     SplitBottomFrame,
     SplitTopFrame,
 )
+from core.themes.library import ThemeLibrary
 
 
 class _Random(): ...
 
 class _Default(): ...
+
+class _ThemeLoad():
+    def __init__(self, tag: str):
+        self.tag = tag
 
 
 class Generator(enum.Enum):
@@ -48,8 +54,8 @@ class Generator(enum.Enum):
     HSV = HSVGenerator
 
     @staticmethod
-    def choices():
-        return [g.value() for g in Generator if g not in (Generator.RANDOM, Generator.DEFAULT,)]        
+    def choices(library: ColourLibrary):
+        return [g.value(library) for g in Generator if g not in (Generator.RANDOM, Generator.DEFAULT,)]        
 
 
 class Theme(enum.Enum):
@@ -57,15 +63,12 @@ class Theme(enum.Enum):
     DEFAULT = _Default
 
     @staticmethod
-    def load(tag) -> ThemeContainer:
-        theme = themes.get(tag)
-        if theme is None:
-            raise KeyError(f'No theme: {tag}')
-        return theme
-
+    def choices(library: ThemeLibrary) -> list[ThemeContainer]:
+        return library.all()
+    
     @staticmethod
-    def choices() -> list[ThemeContainer]:
-        return themes.all()
+    def load(tag: str):
+        return _ThemeLoad(tag)
 
     @staticmethod
     def default() -> ThemeContainer:
