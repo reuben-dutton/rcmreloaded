@@ -11,8 +11,8 @@ import os
 import atproto
 import config
 
-from pipeline.pipeline import Pipeline
-from pipeline.enums import (
+from core.pipeline.pipeline import Pipeline
+from core.pipeline.enums import (
     Palette,
     Theme,
     Frame,

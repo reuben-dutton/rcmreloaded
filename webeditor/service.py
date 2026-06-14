@@ -23,14 +23,21 @@ import random
 import struct
 import threading
 
+import colorspacious
 import numpy as np
 import skimage.color
 import sklearn.neighbors
 from PIL import Image
 
-from db import repository, session_scope
-from db.schemas import Colour
-from pipeline.themes import KDETheme, to_tag
+from core.colours import Colour, colours
+from core.database import session_scope
+from core.themes import KDEThemeRegion, repository, to_tag
+from core.pipeline.frames import (
+    FourByFourFrame, HorizontalFrame, SingleFrame,
+    SplitBottomFrame, SplitLeftFrame, SplitRightFrame, SplitTopFrame,
+    ThirdsBottomFrame, ThirdsLeftFrame, ThirdsRightFrame, ThirdsTopFrame,
+    ThreeByThreeFrame, TwoByTwoFrame, VerticalFrame,
+)
 
 
 GRID_STEPS_DEFAULT = 20
@@ -44,7 +51,7 @@ _lock = threading.Lock()
 _images: dict[str, bytes] = {}
 _fits: dict[tuple, sklearn.neighbors.KernelDensity] = {}
 _grids: dict[tuple, tuple[np.ndarray, np.ndarray]] = {}
-_themes: dict[tuple, KDETheme] = {}
+_themes: dict[tuple, KDEThemeRegion] = {}
 _swatches: dict[str, list[dict]] = {}
 
 
@@ -176,9 +183,7 @@ def penalised_max(log_density: np.ndarray, grid_rgb: np.ndarray, sat_penalty: fl
 
 
 # ---------------------------------------------------------------------------
-# vectorised CIELCh sampling (batched twin of pipeline.generators.CIELChGenerator)
-
-import colorspacious  # noqa: E402  (heavy import kept near its only use)
+# vectorised CIELCh sampling (batched twin of core.pipeline.generators.CIELChGenerator)
 
 _L_ALPHA, _L_BETA = 1.4, 1.4
 _MAX_C = 250.0
@@ -234,7 +239,7 @@ def sample_accepted(kde: sklearn.neighbors.KernelDensity | None, threshold: floa
         hits = rgb[np.random.rand(len(rgb)) < p]
         accepted.extend(hits[:need])
 
-    return [Colour.from_rgb(tuple(int(v) for v in rgb)) for rgb in accepted[:n]]
+    return [colours.make(tuple(int(v) for v in rgb)) for rgb in accepted[:n]]
 
 
 # ---------------------------------------------------------------------------
@@ -249,14 +254,14 @@ def theme_blob(tag: str) -> bytes:
     return blob
 
 
-def load_theme(tag: str) -> KDETheme:
+def load_theme(tag: str) -> KDEThemeRegion:
     blob = theme_blob(tag)
     version = hashlib.sha1(blob).hexdigest()[:16]
     with _lock:
         cached = _themes.get((tag, version))
     if cached is not None:
         return cached
-    theme = KDETheme.deserialize(blob)
+    theme = KDEThemeRegion.deserialize(blob)
     with _lock:
         _themes[(tag, version)] = theme
     return theme
@@ -348,7 +353,7 @@ def theme_swatches(tag: str, n: int) -> list[dict]:
 
 def sample_mix(tags: list[str], n: int) -> list[Colour]:
     '''
-    Sample n colours from a mix of themes, batched. Mirrors CombinedTheme:
+    Sample n colours from a mix of themes, batched. Mirrors a multi-region Theme:
     each colour's source theme is chosen uniformly at random (a multinomial
     split, not a forced even one), then sampled from that theme alone.
     '''
@@ -382,7 +387,7 @@ def save_theme(kde: sklearn.neighbors.KernelDensity, name: str, desc: str,
         raise ValueError('Theme name must contain at least one letter or digit')
 
     grid_rgb, log_density = score_grid(kde, GRID_STEPS_SAVE)
-    theme = KDETheme(
+    theme = KDEThemeRegion(
         name=name.strip(),
         desc=(desc or '').strip(),
         source=(source or '').strip() or 'generic',
@@ -397,7 +402,10 @@ def save_theme(kde: sklearn.neighbors.KernelDensity, name: str, desc: str,
         _tint_penalty=float(tint_penalty),
     )
     with session_scope() as session:
-        repository.upsert_theme(session, theme)
+        repository.upsert_theme(
+            session, theme.tag, theme.name, theme.desc,
+            theme.source, 'kde', theme.serialize(),
+        )
     return {'tag': tag, 'name': theme.name}
 
 
@@ -417,14 +425,6 @@ def theme_file_bytes(tag: str) -> bytes:
 # frame preview
 
 def render_frame(colours: list[Colour], layout: str) -> bytes:
-    # imported lazily: layers.text loads font files from a relative path at
-    # import time, so this keeps the rest of the app alive if fonts are missing
-    from pipeline.frames import (
-        SingleFrame, HorizontalFrame, VerticalFrame,
-        TwoByTwoFrame, ThreeByThreeFrame, FourByFourFrame,
-        ThirdsRightFrame, ThirdsLeftFrame, ThirdsBottomFrame, ThirdsTopFrame,
-        SplitRightFrame, SplitLeftFrame, SplitBottomFrame, SplitTopFrame,
-    )
     layouts = {
         'single': SingleFrame(1, (1200, 1200)),
         'double-horizontal': HorizontalFrame(2, (600, 1200)),

@@ -58,8 +58,8 @@ Three tabs:
 ## Generating in code
 
 ```python
-from pipeline.pipeline import Pipeline
-from pipeline.enums import Theme, Palette, Frame, Sample
+from core.pipeline.pipeline import Pipeline
+from core.pipeline.enums import Theme, Palette, Frame, Sample
 
 image, colours = (
     Pipeline()
@@ -82,5 +82,23 @@ longer takes any arguments:
 
 The builder stages — `.filter()` (theme), `.palette()`, `.sample()`,
 `.layout()` (frame), and `.options()` — are all optional; unset stages resolve
-randomly. See `pipeline/enums.py` for all generators, palettes, frames, and
-sample counts.
+randomly. See `core/pipeline/enums.py` for all generators, palettes, frames,
+and sample counts.
+
+## Project layout
+
+Application code lives under `core/`, organised by domain with a one-way
+dependency flow — `database ← colours ← themes ← pipeline ← interactions` —
+so each domain owns its own database access and imports stay close to use.
+
+- `core/database/` — SQLAlchemy engine/session and the ORM record models.
+- `core/colours/` — the `Colour` value type, the KD-tree colour naming, and
+  the `colours` factory/library that constructs (and names) every colour.
+- `core/themes/` — colour-space regions (e.g. `KDEThemeRegion`), the `Theme`
+  container that composes them (`|` mixes), and the `themes` library.
+- `core/pipeline/` — the declarative `Pipeline` and `enums`, plus
+  `generators/`, `palettes/`, and `frames/` (with its `layers/`).
+- `core/interactions/` — Bluesky/atproto-facing features; currently theme
+  votes (`core/interactions/votes/`).
+- `webeditor/` — the theme studio (FastAPI backend + WebGL frontend).
+- `data/` — the SQLite database (`rcm.db`) and fonts.
