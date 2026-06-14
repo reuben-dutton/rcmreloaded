@@ -134,17 +134,4 @@ class KDEThemeRegion(_ThemeRegionBase):
 
     @classmethod
     def deserialize(cls, data: bytes) -> "KDEThemeRegion":
-        theme = pickle.loads(data)
-        # themes pickled before these penalties existed load without the
-        # attributes (pickle bypasses __init__, so field defaults never run)
-        for attr in ('_shade_penalty', '_tint_penalty'):
-            if not hasattr(theme, attr):
-                setattr(theme, attr, 0.0)
-        return theme
-
-
-
-# The ``Theme`` container (composed of these regions) and ``default_theme`` live
-# in core.themes.schemas, so this module stays a leaf of the theme domain.
-
-
+        return pickle.loads(data)

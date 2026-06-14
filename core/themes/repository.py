@@ -6,8 +6,6 @@ core.themes.library, which keeps this repository free of any pipeline dependency
 
 from __future__ import annotations
 
-import random
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -51,13 +49,3 @@ def delete_theme(session: Session, tag: str) -> bool:
         return False
     session.delete(record)
     return True
-
-
-def pick_random_theme_tags(session: Session, count: int) -> list[str]:
-    '''A random sample of ``count`` distinct theme tags from the library.'''
-    tags = list(session.scalars(select(ThemeRecord.tag)))
-    if len(tags) < count:
-        raise ValueError(
-            f'Only {len(tags)} themes in the library, cannot pick {count}.'
-        )
-    return random.sample(tags, count)

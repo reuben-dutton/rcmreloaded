@@ -14,7 +14,6 @@ from core.themes.repository import (
     all_theme_records,
     delete_theme,
     get_theme_blob,
-    pick_random_theme_tags,
     theme_tags,
     upsert_theme,
 )
@@ -34,5 +33,4 @@ __all__ = [
     'theme_tags',
     'upsert_theme',
     'delete_theme',
-    'pick_random_theme_tags',
 ]
