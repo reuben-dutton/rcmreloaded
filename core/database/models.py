@@ -236,6 +236,14 @@ class ThemeOptionRecord(Base):
     def theme_name(self) -> str:
         return self.theme.name
 
+    @property
+    def theme_source(self) -> str:
+        return self.theme.source
+
+    @property
+    def theme_desc(self) -> str:
+        return self.theme.desc
+
     def __repr__(self) -> str:
         return (
             f'ThemeOptionRecord(id={self._id}, '

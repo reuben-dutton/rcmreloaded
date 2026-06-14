@@ -64,6 +64,8 @@ class ThemeVoteGenerator:
             options.append(ThemeOption(
                 theme_tag=tag,
                 theme_name=theme.name if theme is not None else tag,
+                theme_source=theme.source if theme is not None else 'generic',
+                theme_desc=theme.desc if theme is not None else '',
             ))
 
         return ThemeVote(

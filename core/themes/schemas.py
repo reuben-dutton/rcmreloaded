@@ -39,8 +39,35 @@ class Theme:
         return all(region.INVARIANT for region in self.regions) if self.regions else True
 
     @property
+    def size(self) -> int:
+        '''How many colour-space regions this theme composes.'''
+        return len(self.regions)
+
+    @property
     def name(self) -> str:
         return ' + '.join(region.name for region in self.regions)
+
+    @property
+    def desc(self) -> str:
+        '''
+        The theme's description, taken from its sole region. Only defined for a
+        single-region theme (``size == 1``); a combined theme has no one
+        description.
+        '''
+        if self.size != 1:
+            raise ValueError('desc is only defined for a single-region theme')
+        return self.regions[0].desc
+
+    @property
+    def source(self) -> str:
+        '''
+        Where the theme draws from, taken from its sole region. Only defined for
+        a single-region theme (``size == 1``); a combined theme has no one
+        source.
+        '''
+        if self.size != 1:
+            raise ValueError('source is only defined for a single-region theme')
+        return self.regions[0].source
 
     def accepted(self, colour: Colour) -> bool:
         if not self.regions:

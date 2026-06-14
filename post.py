@@ -11,6 +11,7 @@ import os
 import atproto
 import config
 
+from core.interactions import InteractionsService
 from core.pipeline.pipeline import Pipeline
 from core.pipeline.enums import (
     Palette,
@@ -18,9 +19,12 @@ from core.pipeline.enums import (
     Frame,
 )
 
+# the current winning theme while a vote's theme window is active, else default
+theme = InteractionsService().vote.current or Theme.DEFAULT
+
 p = (
         Pipeline()
-        .filter(Theme.DEFAULT)
+        .filter(theme)
         .random()
 )
 
