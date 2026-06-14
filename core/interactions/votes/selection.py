@@ -14,6 +14,7 @@ from __future__ import annotations
 import random
 
 from core.themes import themes
+from core.themes.library import ThemeLibrary
 
 
 class _ThemeSelection:
@@ -31,11 +32,12 @@ class AllThemesSelection(_ThemeSelection):
     library holds fewer themes than asked for, every theme is used.
     '''
 
-    def __init__(self, count: int | tuple[int, int] = (4, 6)):
+    def __init__(self, library: ThemeLibrary = themes, count: int | tuple[int, int] = (4, 6)):
         self.count = count
+        self.tlibrary = library
 
     def select(self) -> list[str]:
-        available = themes.tags()
+        available = self.tlibrary.tags()
         n = self.count if isinstance(self.count, int) else random.randint(*self.count)
         n = min(n, len(available))
         return random.sample(available, n)
