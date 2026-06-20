@@ -63,7 +63,8 @@ for testing.
 
 ## Theme studio (web editor)
 
-Run from the repo root (frame previews load fonts via relative paths):
+Run from the repo root (so the `webeditor`, `core`, and `config` imports
+resolve):
 
 ```
 poetry run uvicorn webeditor.app:app --port 8321 --reload

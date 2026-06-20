@@ -8,6 +8,7 @@ from PIL import (
     ImageFont,
 )
 
+import config
 from core.pipeline.frames.layers.base import BaseLayer
 from core.pipeline.frames.layers.constants import (
     DEFAULT_WHITE_COLOUR,
@@ -28,9 +29,11 @@ DEFAULT_BLUR_ITERATIONS = 2
 DEFAULT_SHADOW_BLUR_RADIUS = 6
 
 
-PRIMARY_FONT_PATH = 'data/fonts/Bayemalt-Regular.otf'
+# fonts live under data/fonts/; resolve absolutely (like the database path) so
+# rendering works regardless of the current working directory
+PRIMARY_FONT_PATH = config.DATA_DIRECTORY / 'fonts' / 'Bayemalt-Regular.otf'
 PRIMARY_FONT_SIZE = 108
-SECONDARY_FONT_PATH = 'data/fonts/SairaCondensed-Bold.ttf'
+SECONDARY_FONT_PATH = config.DATA_DIRECTORY / 'fonts' / 'SairaCondensed-Bold.ttf'
 SECONDARY_FONT_SIZE = 54
 
 

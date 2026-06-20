@@ -1,7 +1,8 @@
 '''
 FastAPI app for the theme editor + library.
 
-Run from the repo root (the layer code loads fonts via relative paths):
+Run from the repo root (so the ``webeditor``, ``core`` and ``config`` imports
+resolve):
 
     poetry run uvicorn webeditor.app:app --port 8321
 
