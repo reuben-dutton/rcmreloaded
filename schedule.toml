@@ -21,7 +21,7 @@ misfire_grace_time = 30
 [tasks.post_generation]
 notebook = "post_generation.ipynb"
 trigger = "cron"
-cron = "0 * * * *"          # every hour, on the hour
+cron = "0 */2 * * *"        # every 2 hours, on the hour
 
 [tasks.post_theme_vote]
 notebook = "post_theme_vote.ipynb"
