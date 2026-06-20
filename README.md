@@ -31,6 +31,36 @@ poetry run python post.py
 
 Generates a random palette image and posts it.
 
+## Scheduler
+
+A long-running scheduler posts on a timetable, executing task notebooks from
+`core/tasks/` with [APScheduler](https://apscheduler.readthedocs.io/) and
+[papermill](https://papermill.readthedocs.io/):
+
+```
+poetry run python run.py
+```
+
+What runs, and when, is declared in `schedule.toml` in the repo root. Each
+`[tasks.<name>]` names a notebook in `core/tasks/` and a trigger:
+
+- `cron` — fire at fixed clock times. Use a 5-field crontab string
+  (`cron = "0 9 * * mon"`) or individual fields (`hour`, `minute`, …).
+- `interval` — fire every N units (`hours = 2`, `minutes = 30`, …).
+- `tick` — a recurring poll for database-driven work: the notebook itself
+  decides whether there's anything to do and no-ops otherwise. Used by
+  `update_vote_likes`, which refreshes the active vote's like counts.
+
+The scheduler keeps no job store. If the process is down when a fixed-time run
+was due, that run is dropped rather than replayed late ("cancelled, not
+delayed"); `misfire_grace_time` under `[scheduler]` sets how late a run may
+start before it's skipped, and `tick` jobs coalesce a backlog into a single
+run.
+
+Each task notebook takes a papermill `dry_run` parameter (build/compute but
+skip the Bluesky post and database write) and can be run on its own from VSCode
+for testing.
+
 ## Theme studio (web editor)
 
 Run from the repo root (frame previews load fonts via relative paths):
@@ -100,5 +130,9 @@ so each domain owns its own database access and imports stay close to use.
   `generators/`, `palettes/`, and `frames/` (with its `layers/`).
 - `core/interactions/` — Bluesky/atproto-facing features; currently theme
   votes (`core/interactions/votes/`).
+- `core/tasks/` — the scheduled task notebooks (post a generation, post a
+  theme vote, update vote likes), run headlessly via papermill.
+- `core/scheduler/` — the APScheduler-based `Scheduler` that runs those tasks
+  on the schedule in `schedule.toml` (entry point: `run.py`).
 - `webeditor/` — the theme studio (FastAPI backend + WebGL frontend).
 - `data/` — the SQLite database (`rcm.db`) and fonts.

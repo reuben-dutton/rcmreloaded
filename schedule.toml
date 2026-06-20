@@ -1,0 +1,34 @@
+# schedule.toml - which task notebooks the scheduler runs, and when.
+#
+# Each [tasks.<name>] points at a notebook in core/tasks/ and a trigger.
+# Triggers:
+#   cron     - fire at specific clock times. Use a 5-field crontab string
+#              (`cron = "0 9 * * mon"`) or individual fields (hour/minute/...).
+#   interval - fire every N units. Use weeks/days/hours/minutes/seconds.
+#   tick     - a recurring poll (interval under the hood) for DB-driven work:
+#              the notebook itself decides whether there's anything to do and
+#              no-ops otherwise. Backed-up runs collapse into one.
+#
+# There is no job persistence. If the scheduler process is down when a
+# cron/interval run was due, that run is dropped - never replayed late.
+
+[scheduler]
+timezone = "UTC"
+# A run that can't start within this many seconds of its due time is skipped
+# (cancelled), not delayed.
+misfire_grace_time = 30
+
+[tasks.post_generation]
+notebook = "post_generation.ipynb"
+trigger = "cron"
+cron = "0 * * * *"          # every hour, on the hour
+
+[tasks.post_theme_vote]
+notebook = "post_theme_vote.ipynb"
+trigger = "cron"
+cron = "0 9 * * mon"        # 09:00 every Monday
+
+[tasks.update_vote_likes]
+notebook = "update_vote_likes.ipynb"
+trigger = "tick"
+minutes = 15               # poll every 15 minutes
