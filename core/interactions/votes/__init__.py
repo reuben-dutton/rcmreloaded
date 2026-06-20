@@ -8,7 +8,7 @@ vote - theme ``selection`` and ``schedules`` - wired together by
 
 from core.interactions.votes.schemas import ThemeOption, ThemeVote
 from core.interactions.votes.repository import (
-    active_theme_vote,
+    current_theme_vote,
     add_theme_vote,
     all_theme_votes,
     delete_theme_vote,
@@ -34,6 +34,6 @@ __all__ = [
     'add_theme_vote',
     'get_theme_vote',
     'all_theme_votes',
-    'active_theme_vote',
+    'current_theme_vote',
     'delete_theme_vote',
 ]

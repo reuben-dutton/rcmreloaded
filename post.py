@@ -20,7 +20,7 @@ from core.pipeline.enums import (
 )
 
 # the current winning theme while a vote's theme window is active, else default
-theme = InteractionsService().vote.current or Theme.DEFAULT
+theme = InteractionsService().vote.active or Theme.DEFAULT
 
 p = (
         Pipeline()

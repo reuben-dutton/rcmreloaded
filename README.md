@@ -61,6 +61,23 @@ Each task notebook takes a papermill `dry_run` parameter (build/compute but
 skip the Bluesky post and database write) and can be run on its own from VSCode
 for testing.
 
+## Theme vote windows
+
+A theme vote runs through three nested time windows, and the code uses the same
+vocabulary throughout (`core/interactions/votes`):
+
+- **current** — the whole span, `vote_start_date → theme_end_date`. At most one
+  vote is current at a time (`current_theme_vote()`).
+- **voting** — the voting span, `vote_start_date → vote_end_date`, while people
+  like option comments to cast their vote (`vote.voting`).
+- **active** — the theme span, `theme_start_date → theme_end_date`, while the
+  winning theme drives generation (`vote.active`).
+
+This is what gates the scheduled tasks: `update_vote_likes` refreshes likes only
+while a vote is **voting**, and `post_generation` uses the winning theme only
+while it is **active** (`InteractionsService().vote.active`) — outside that
+window it posts a default-themed image.
+
 ## Theme studio (web editor)
 
 Run from the repo root (so the `webeditor`, `core`, and `config` imports

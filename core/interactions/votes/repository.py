@@ -69,13 +69,14 @@ def all_theme_votes(session: Session) -> list[ThemeVote]:
     return [ThemeVote.model_validate(r) for r in records]
 
 
-def active_theme_vote(
+def current_theme_vote(
     session: Session, at: datetime.datetime | None = None
 ) -> ThemeVote | None:
     '''
-    The theme vote whose window currently contains ``at`` (defaults to now in
-    UTC), i.e. ``vote_start_date <= at <= theme_end_date``. Votes never overlap,
-    so there is at most one - returns its DTO, or None if nothing is active.
+    The current theme vote: the one whose window contains ``at`` (defaults to
+    now in UTC), i.e. ``vote_start_date <= at <= theme_end_date``. Votes never
+    overlap, so there is at most one - returns its DTO, or None if no vote is
+    current.
     '''
     at = at or datetime.datetime.now(datetime.timezone.utc)
     record = session.scalar(

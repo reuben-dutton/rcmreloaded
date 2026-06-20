@@ -3,7 +3,7 @@ The interactions domain: Bluesky/atproto-facing functionality.
 
 Currently this is theme votes - see core.interactions.votes. The
 ``InteractionsService`` is the session-free entry point callers use to read the
-active winning theme (e.g. ``InteractionsService().vote.current``).
+active winning theme (e.g. ``InteractionsService().vote.active``).
 '''
 
 from core.interactions.service import InteractionsService, VoteService

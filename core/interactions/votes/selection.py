@@ -28,11 +28,11 @@ class AllThemesSelection(_ThemeSelection):
     '''
     The current default: pick a random handful of themes from the whole
     library. ``count`` is either a fixed number or an inclusive ``(min, max)``
-    range to draw from (defaults to 4-6, the size of the post's ballot). If the
+    range to draw from (defaults to 3-3, the size of the post's ballot). If the
     library holds fewer themes than asked for, every theme is used.
     '''
 
-    def __init__(self, library: ThemeLibrary = themes, count: int | tuple[int, int] = (4, 6)):
+    def __init__(self, library: ThemeLibrary = themes, count: int | tuple[int, int] = (3, 3)):
         self.count = count
         self.tlibrary = library
 
